@@ -55,6 +55,19 @@ export const accountTable = pgTable("account", {
   updatedAt: timestamp("updated_at").notNull(),
 });
 
+export const verificationTable = pgTable("verification", {
+  id: text("id").primaryKey(),
+  identifier: text("identifier").notNull(),
+  value: text("value").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").$defaultFn(
+    () => /* @__PURE__ */ new Date(),
+  ),
+  updatedAt: timestamp("updated_at").$defaultFn(
+    () => /* @__PURE__ */ new Date(),
+  ),
+});
+
 export const categoryTable = pgTable("category", {
   id: uuid().primaryKey().defaultRandom(),
   name: text().notNull(),
@@ -63,15 +76,15 @@ export const categoryTable = pgTable("category", {
 });
 
 export const categoryRelations = relations(categoryTable, ({ many }) => ({
-  product: many(productTable),
+  products: many(productTable),
 }));
 
 export const productTable = pgTable("product", {
   id: uuid().primaryKey().defaultRandom(),
-  name: text().notNull(),
   categoryId: uuid("category_id")
     .notNull()
     .references(() => categoryTable.id, { onDelete: "set null" }),
+  name: text().notNull(),
   slug: text().notNull().unique(),
   description: text().notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -91,8 +104,8 @@ export const productVariantTable = pgTable("product_variant", {
     .notNull()
     .references(() => productTable.id, { onDelete: "cascade" }),
   name: text().notNull(),
-  color: text().notNull(),
   slug: text().notNull().unique(),
+  color: text().notNull(),
   priceInCents: integer("price_in_cents").notNull(),
   imageUrl: text("image_url").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -101,7 +114,7 @@ export const productVariantTable = pgTable("product_variant", {
 export const productVariantRelations = relations(
   productVariantTable,
   ({ one }) => ({
-    category: one(productTable, {
+    product: one(productTable, {
       fields: [productVariantTable.productId],
       references: [productTable.id],
     }),
